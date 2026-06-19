@@ -1,1 +1,2 @@
-# ExamenBasicoBansi
+<em> # Examen </em>
+Examen de adminisión para Bansi, realizado con Blazor para el Front, WebAPI como Backend, Sql Server para base de datos, capa de acceso a datos que permite decidir al usuario si hacer llamadas a los endpoints de las Api's o ejecutar Stored Procedures (adjuntados en el proyecto BansiBaseDeDatos), se utiilizó inyección de dependencias y patrón repositorio para un código limpio y escalable
