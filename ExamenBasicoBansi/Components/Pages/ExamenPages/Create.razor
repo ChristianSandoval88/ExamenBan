@@ -1,0 +1,80 @@
+﻿@page "/create"
+@using BansiLibreriaAccesoDatos
+@using BansiModelos
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear examen</PageTitle>
+
+<h1>Crear examen</h1>
+<hr />
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    </div>
+</div>
+}
+<div class="row">
+    <div class="col-md-4">
+        <label class="form-label mb-0">Tipo de servicio:</label>
+        <select class="form-select w-auto" @onchange="OnAccessTypeChanged">
+            <option value="@TipoAccesoDatos.WebService" selected="@(selectedTipo == TipoAccesoDatos.WebService)">WebService</option>
+            <option value="@TipoAccesoDatos.StoredProcedures" selected="@(selectedTipo == TipoAccesoDatos.StoredProcedures)">StoredProcedures</option>
+        </select>
+        <EditForm method="post" Model="Examen" OnValidSubmit="AddExamen" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre:</label>
+                <InputText id="nombre" @bind-Value="Examen.Nombre" class="form-control" />
+                <ValidationMessage For="() => Examen.Nombre" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripcion:</label>
+                <InputText id="descripcion" @bind-Value="Examen.Descripcion" class="form-control" />
+                <ValidationMessage For="() => Examen.Descripcion" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Crear</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/">Regresar</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Examen Examen { get; set; } = new() { Nombre = "", Descripcion = "" };
+    private FiltroBusqueda filtroBusqueda = new();
+    private List<Examen>? examenes = new();
+    private string errorMessage = string.Empty;
+    private TipoAccesoDatos selectedTipo { get; set; } = TipoAccesoDatos.WebService;
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+    private async Task AddExamen()
+    {
+        ClsExamen clsExamen = new(selectedTipo);
+        var respuesta = await clsExamen.AgregarExamenAsync(Examen!);
+        errorMessage = respuesta.Descripcion!;
+        if (respuesta.Exito)
+            NavigationManager.NavigateTo("/");
+    }
+    private async Task OnAccessTypeChanged(ChangeEventArgs e)
+    {
+        if (e?.Value is not null)
+        {
+            if (Enum.TryParse<TipoAccesoDatos>(e.Value.ToString(), out var parsed))
+            {
+                selectedTipo = parsed;
+            }
+        }
+    }
+
+}

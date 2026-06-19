@@ -1,0 +1,92 @@
+﻿@page "/"
+@using BansiLibreriaAccesoDatos
+@using BansiModelos
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<PageTitle>Bansi Examen</PageTitle>
+<h1>Bansi Examen</h1>
+<p>
+    <a href="/create" class="btn btn-primary">Crear examen</a>
+</p>
+@if (examenes.Count == 0)
+{
+<p>No se encontraron examenes.</p>
+}
+else
+{
+<div class="mb-3 d-flex align-items-center gap-2">
+    <label class="form-label mb-0">Tipo de consulta:</label>
+    <select class="form-select w-auto" @onchange="OnAccessTypeChanged">
+        <option value="@TipoAccesoDatos.WebService" selected="@(selectedTipo == TipoAccesoDatos.WebService)">WebService</option>
+        <option value="@TipoAccesoDatos.StoredProcedures" selected="@(selectedTipo == TipoAccesoDatos.StoredProcedures)">StoredProcedures</option>
+    </select>
+    <input class="form-control w-auto me-2" placeholder="Nombre" @bind="filtroBusqueda.Nombre" />
+    <input class="form-control w-auto me-2" placeholder="Descripción" @bind="filtroBusqueda.Descripcion" />
+
+    <button class="btn btn-secondary" @onclick="CargarExamenes">Filtrar</button>
+</div>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var examen in examenes)
+        {
+            <tr>
+
+                <td>@examen.IdExamen</td>
+                <td>@examen.Nombre</td>
+                <td>@examen.Descripcion</td>
+                    <td><a href="@($"/edit/{examen.IdExamen}")">Editar</a></td>
+                    <td><a href=@($"/delete/{examen.IdExamen}")>Eliminar</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+}
+
+@code {
+    private List<Examen>? examenes = new();
+    private FiltroBusqueda filtroBusqueda = new();
+    private TipoAccesoDatos selectedTipo { get; set; } = TipoAccesoDatos.WebService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarExamenes();
+    }
+
+    private async Task CargarExamenes()
+    {
+        try
+        {
+            ClsExamen clsExamen = new(selectedTipo);
+            examenes = await clsExamen.ConsultarExamenAsync(filtroBusqueda) ?? new List<Examen>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar con api: {ex.Message}");
+            examenes = new();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnAccessTypeChanged(ChangeEventArgs e)
+    {
+        if (e?.Value is not null)
+        {
+            if (Enum.TryParse<TipoAccesoDatos>(e.Value.ToString(), out var parsed))
+            {
+                selectedTipo = parsed;
+            }
+        }
+        await CargarExamenes();
+    }
+}

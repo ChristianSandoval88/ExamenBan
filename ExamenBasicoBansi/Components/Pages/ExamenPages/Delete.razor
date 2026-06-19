@@ -1,0 +1,93 @@
+﻿@page "/delete/{IdExamen:int}"
+@using BansiLibreriaAccesoDatos
+@using BansiModelos
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Eliminar examen</PageTitle>
+
+<h1>Eliminar examen</h1>
+
+<hr />
+@if (Examen is null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
+                </div>
+            </div>
+        </div>
+    }
+        <div class="row">
+            <div class="col-md-12">
+                <p>Está seguro de eliminar este examen?</p>
+                <dl class="row">
+                    <dt class="col-sm-2">Nombre</dt>
+                    <dd class="col-sm-10">@Examen.Nombre</dd>
+                </dl>
+                <dl class="row">
+                    <dt class="col-sm-2">Descripcion</dt>
+                    <dd class="col-sm-10">@Examen.Descripcion</dd>
+                </dl>
+            </div>
+        </div>
+        <EditForm method="post" Model="Examen" OnValidSubmit="DeleteExamen" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(Examen is null)">Eliminar</button> |
+            <a href="/">Regresar</a>
+        </EditForm>
+}
+@code {
+    [Parameter]
+    public int IdExamen { get; set; }
+    private string errorMessage = string.Empty;
+    private Examen? Examen { get; set; }
+    private TipoAccesoDatos selectedTipo { get; set; } = TipoAccesoDatos.WebService;
+    private FiltroBusqueda filtroBusqueda = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarExamen(IdExamen);
+    }
+
+    private async Task CargarExamen(int id)
+    {
+        try
+        {
+            ClsExamen clsExamen = new(selectedTipo);
+            Examen = await clsExamen.ConsultarExamenAsync(IdExamen);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar con api: {ex.Message}");
+            Examen = new();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteExamen()
+    {
+        ClsExamen clsExamen = new(selectedTipo);
+        var respuesta = await clsExamen.EliminarExamenAsync(Examen!);
+        errorMessage = respuesta.Descripcion!;
+        if (respuesta.Exito)
+            NavigationManager.NavigateTo("/");
+    }
+
+    private async Task OnAccessTypeChanged(ChangeEventArgs e)
+    {
+        if (e?.Value is not null)
+        {
+            if (Enum.TryParse<TipoAccesoDatos>(e.Value.ToString(), out var parsed))
+            {
+                selectedTipo = parsed;
+            }
+        }
+    }
+}

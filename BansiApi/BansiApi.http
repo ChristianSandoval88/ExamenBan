@@ -1,0 +1,6 @@
+@BansiApi_HostAddress = http://localhost:5088
+
+GET {{BansiApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
